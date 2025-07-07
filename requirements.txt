@@ -1,0 +1,5 @@
+ffmpeg-python
+paddleocr
+paddlepaddle
+openai
+pysrt
