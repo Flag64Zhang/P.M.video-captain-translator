@@ -1,5 +1,6 @@
+#src/similar.py
+#相似度计算、字幕合并、翻译字典构建等功能
 import Levenshtein
-
 
 # 计算归一化相似度
 def is_similar(text1, text2, threshold=0.9):

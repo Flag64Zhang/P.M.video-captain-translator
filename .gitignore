@@ -1,0 +1,6 @@
+/test_result/
+/data/cache/frames/
+/data/cache/frames_processed/
+/data/input/test_video.mp4
+/data/output/output_subtitles.srt
+/.venv/

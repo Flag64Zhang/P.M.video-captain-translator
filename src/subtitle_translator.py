@@ -7,12 +7,12 @@ import pysrt
 import opencv_processors
 
 # ========== 配置 ==========
-VIDEO_FILE = "input_video.mp4"
+VIDEO_FILE = "../data/input/input_video.mp4"
 FRAMES_DIR = "frames"
 OCR_LANG = 'ch'
 OUTPUT_SRT = "output_subtitles.srt"
 client = OpenAI(
-    api_key="HIDE",
+    api_key="zhangxuhao2005@shu.edu.cn",
     base_url="https://api.deepseek.com/v1"
 )
 
@@ -157,6 +157,6 @@ if __name__ == "__main__":
     ocr_results = ocr_frames("frames_processed")  # 用处理后的图片
     merged_results = merge_duplicate_subtitles(ocr_results)
     save_srt(merged_results, OUTPUT_SRT)
-    remove_subtitles_area(VIDEO_FILE, "process_video.mp4")
-    burn_subtitles("process_video.mp4", OUTPUT_SRT, "output_video.mp4")
+    remove_subtitles_area(VIDEO_FILE, "../data/output/process_video.mp4")
+    burn_subtitles("../data/output/process_video.mp4", OUTPUT_SRT, "data/output/output_video.mp4")
     print(f"Done in {time.time() - t0:.2f}s")
