@@ -6,8 +6,9 @@
       <excludeFolder url="file://$MODULE_DIR$/data/cache/frames" />
       <excludeFolder url="file://$MODULE_DIR$/data/cache/frames_processed" />
       <excludeFolder url="file://$MODULE_DIR$/test_result" />
+      <excludeFolder url="file://$MODULE_DIR$/.venv1" />
     </content>
-    <orderEntry type="inheritedJdk" />
+    <orderEntry type="jdk" jdkName="Python 3.11 (pythonProject)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>
