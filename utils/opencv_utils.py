@@ -96,7 +96,7 @@ def process_frames(
         print(f"Processed and saved: {out_path}")
 
 # 启发式检测（底部高亮区域）
-def detect_subtitle_area_heuristic(frames_dir, sample_step=1, crop_ratio=1/6, min_area=500):
+def detect_subtitle_area_heuristic(frames_dir, sample_step=1, crop_ratio=1/6, min_area=200):
     """
     启发式检测视频帧图片中的字幕区域（底部高亮区域法）。
     返回最大包围矩形 (x_min, y_min, x_max, y_max)，若未检测到返回None。
@@ -113,7 +113,7 @@ def detect_subtitle_area_heuristic(frames_dir, sample_step=1, crop_ratio=1/6, mi
         crop_top = int(h * (1 - crop_ratio))
         roi = img[crop_top:h, 0:w]
         gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
-        _, binary = cv2.threshold(gray, 200, 255, cv2.THRESH_BINARY)
+        _, binary = cv2.threshold(gray, 160, 180, cv2.THRESH_BINARY)
         contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         boxes = [cv2.boundingRect(c) for c in contours if cv2.contourArea(c) > min_area]
         if boxes:

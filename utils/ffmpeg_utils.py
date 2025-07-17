@@ -10,6 +10,7 @@ with open(CONFIG_PATH, 'r', encoding='utf-8') as f:
 paths = config.get('paths', {})
 
 VIDEO_FILE = paths.get('input_video', '../data/input/input_video.mp4')
+OUTPUT_FILE = paths.get('output_video', '../data/output/output_video.mp4')
 FRAMES_DIR = paths.get('frames_dir', 'data/cache/frames')
 # ========== 1. 提取视频帧 ==========
 def extract_frames(video_file=VIDEO_FILE, output_dir=FRAMES_DIR, interval=1):
@@ -31,32 +32,44 @@ def get_video_resolution(video_file):
     height = int(video_stream['height'])
     return width, height
 
-def remove_subtitles_area(video_file=VIDEO_FILE, process_file=paths.get('process_video', '../data/output/process_video.mp4')):
+def remove_subtitles_area(video_file, output_file, area=None):
     width, height = get_video_resolution(video_file)
-    sub_h = height // 6
-    sub_y = height - sub_h
-
-    filter_complex = (
-        f"[0:v]split=2[bg][fg];"
-        f"[fg]crop={width}:{sub_h}:0:{sub_y},boxblur=10:1[blur];"
-        f"[bg][blur]overlay=0:{sub_y}"
-    )
-
-    (
-        ffmpeg
-        .input(video_file)
-        .output(
-            process_file,
-            vf=filter_complex,
-            vcodec='libx264',
-            acodec='copy'
+    print(f"video size: {width}x{height}, area: {area}")
+    if area is not None:
+        x_min, y_min, x_max, y_max = area
+        crop_w = x_max - x_min
+        crop_h = y_max - y_min
+        crop_x = x_min
+        crop_y = y_min
+        filter_complex = (
+            f"[0:v]split=2[bg][fg];"
+            f"[fg]crop={crop_w}:{crop_h}:{crop_x}:{crop_y},boxblur=10:1[blur];"
+            f"[bg][blur]overlay={crop_x}:{crop_y}"
         )
-        .run(overwrite_output=True)
+        print("ffmpeg filter_complex:", filter_complex)
+    else:
+        sub_h = height // 6
+        sub_y = height - sub_h
+        filter_complex = (
+            f"[0:v]split=2[bg][fg];"
+            f"[fg]crop={width}:{sub_h}:0:{sub_y},boxblur=10:1[blur];"
+            f"[bg][blur]overlay=0:{sub_y}"
+        )
+    (
+    ffmpeg
+    .input(video_file)
+    .output(
+        output_file,
+        vf=filter_complex,
+        vcodec='libx264',
+        acodec='copy'
+        )
+    .run(overwrite_output=True)
     )
-    print(f"Video with subtitle area blurred saved to: {process_file}")
+    print(f"Video with subtitle area blurred saved to: {output_file}")
 
 # ========== 6. 给视频加字幕（外挂） ==========
-def burn_subtitles(process_file=paths.get('process_video', '../data/output/process_video.mp4'), srt_file=paths.get('output_srt', 'data/output/output_subtitles.srt'), output_file=paths.get('output_video', 'data/output/output_video.mp4')):
+def burn_subtitles(process_file=paths.get('process_video', '../data/output/output_video.mp4'), srt_file=paths.get('output_srt', 'data/output/output_subtitles.srt'), output_file=paths.get('output_video', 'data/output/output_video.mp4')):
     (
         ffmpeg
         .input(process_file)

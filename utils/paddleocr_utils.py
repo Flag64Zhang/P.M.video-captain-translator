@@ -58,7 +58,7 @@ class SubtitleOcrProcessor:
 
 #对视频帧图片中的字幕区域进行自动检测、裁剪和模糊处理
 class SubtitleAreaProcessor:
-    def __init__(self, frames_dir, sample_step=1, method='auto', crop_ratio=1/6, min_area=500):
+    def __init__(self, frames_dir, sample_step=1, method='auto', crop_ratio=1/3, min_area=500):
         self.frames_dir = frames_dir
         self.sample_step = sample_step
         self.method = method  # 'auto', 'heuristic', 'ocr'
@@ -126,29 +126,28 @@ class SubtitleAreaProcessor:
             out_path = os.path.join(output_dir, fname)
             cv2.imwrite(out_path, crop_img)
             print(f"Cropped and saved: {out_path}")
-
-    def blur_subtitle_area(self, output_dir=None, area=None, method='gaussian', ksize=31):
-        if output_dir is None:
-            output_dir = paths.get('frames_blurred_dir', 'data/cache/frames_blurred')
+    @staticmethod
+    def blur_subtitle_area(input_dir, output_dir, method='gaussian', ksize=31):
+        """
+        对input_dir下所有图片做全图模糊，输出到output_dir。
+        """
+        import cv2, os
         os.makedirs(output_dir, exist_ok=True)
-        x_min, y_min, x_max, y_max = area
-        for fname in sorted(os.listdir(self.frames_dir)):
+        for fname in sorted(os.listdir(input_dir)):
             if not fname.endswith('.png'):
                 continue
-            img_path = os.path.join(self.frames_dir, fname)
+            img_path = os.path.join(input_dir, fname)
             img = cv2.imread(img_path)
-            roi = img[y_min:y_max, x_min:x_max]
             if method == 'gaussian':
-                blur = cv2.GaussianBlur(roi, (ksize|1, ksize|1), 0)
+                blur = cv2.GaussianBlur(img, (ksize|1, ksize|1), 0)
             elif method == 'mosaic':
-                h, w = roi.shape[:2]
-                blur = cv2.resize(roi, (max(1, w//ksize), max(1, h//ksize)), interpolation=cv2.INTER_LINEAR)
+                h, w = img.shape[:2]
+                blur = cv2.resize(img, (max(1, w//ksize), max(1, h//ksize)), interpolation=cv2.INTER_LINEAR)
                 blur = cv2.resize(blur, (w, h), interpolation=cv2.INTER_NEAREST)
             else:
                 raise ValueError("method must be 'gaussian' or 'mosaic'")
-            img[y_min:y_max, x_min:x_max] = blur
             out_path = os.path.join(output_dir, fname)
-            cv2.imwrite(out_path, img)
+            cv2.imwrite(out_path, blur)
             print(f"Blurred and saved: {out_path}")
 
     @staticmethod

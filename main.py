@@ -1,7 +1,7 @@
 # main.py
 
 import yaml
-from utils.ffmpeg_utils import extract_frames
+from utils.ffmpeg_utils import extract_frames,remove_subtitles_area
 from utils.opencv_utils import process_frames, ImageSimilarityCleaner
 from utils.paddleocr_utils import SubtitleOcrProcessor, SubtitleAreaProcessor
 from src.similar import SubtitleSimilarityHelper
@@ -25,15 +25,17 @@ def main():
     frames_dir = paths.get('frames_dir', 'data/cache/frames')
     frames_processed_dir = paths.get('frames_processed_dir', 'data/cache/frames_processed')
     output_srt = paths.get('output_srt', 'data/output/output_subtitles.srt')
+    input_dir = 'data/cache/frames'#模糊函数要处理的图片目录
+    output_dir = 'data/cache/frames_blurred'#模糊函数结果输出目录
 
     # 3. ffmpeg提取视频帧（原始帧）
     print('提取视频帧...')
     extract_frames(video_file=input_video, output_dir=frames_dir, interval=1)
 
-    # 4. opencv进行帧去重（原始帧）
-    print('去除重复帧...')
-    cleaner = ImageSimilarityCleaner(dir_path=frames_dir, threshold=0.8)
-    cleaner.remove_similar_images()
+    # # 4. opencv进行帧去重（原始帧）
+    # print('去除重复帧...')
+    # cleaner = ImageSimilarityCleaner(dir_path=frames_dir, threshold=0.8)
+    # cleaner.remove_similar_images()
 
     # 5. opencv进行预处理（如缩放、裁剪、二值化等，输出到frames_processed_dir）
     print('预处理帧图片...')
@@ -44,10 +46,22 @@ def main():
     area_processor = SubtitleAreaProcessor(frames_dir=frames_processed_dir, sample_step=1)
     area = area_processor.detect_subtitle_area()
     print(f'检测到的字幕区域: {area}')
-    # 可选：裁剪字幕区域
-    area_processor.crop_subtitle_area(area=area)
-    # 可选：模糊字幕区域
-    area_processor.blur_subtitle_area(area=area, method='gaussian', ksize=31)
+    # 模糊字幕区域
+    remove_subtitles_area(
+    video_file=input_video,
+    output_file=output_video,
+    area=area  # 传入你检测到的字幕区域
+)
+    
+    # # 可选：裁剪字幕区域
+    # area_processor.crop_subtitle_area(area=area)
+    # # 可选：模糊字幕区域
+    # SubtitleAreaProcessor.blur_subtitle_area(
+    # input_dir=input_dir,
+    # output_dir=output_dir,
+    # method='gaussian',  # 或 'mosaic'
+    # ksize=31
+    # )
 
     # 6. OCR字幕识别与合并（对预处理后的帧）
     print('OCR字幕识别与合并...')
