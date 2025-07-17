@@ -1,5 +1,5 @@
 # src/__init__.py
-from .opencv_processors import process_video
+from utils.opencv_utils import process_video
 from .similar import calc_similarity
 from .subtitle_area_processor import SubtitleAreaDetector
 from .subtitle_translator import SubtitleTranslator

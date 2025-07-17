@@ -1,9 +1,8 @@
 # main.py
 
-import os
 import yaml
 
-from src.opencv_processors import process_video  # 假设有此函数
+from utils.opencv_utils import process_video  # 假设有此函数
 from src.similar import calc_similarity         # 示例：可用于相似度判断
 from src.subtitle_area_processor import SubtitleAreaDetector
 from src.subtitle_translator import SubtitleTranslator
