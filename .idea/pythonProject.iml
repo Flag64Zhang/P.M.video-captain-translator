@@ -3,12 +3,10 @@
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$">
       <excludeFolder url="file://$MODULE_DIR$/.venv" />
-      <excludeFolder url="file://$MODULE_DIR$/data/cache/frames" />
-      <excludeFolder url="file://$MODULE_DIR$/data/cache/frames_processed" />
-      <excludeFolder url="file://$MODULE_DIR$/test_result" />
-      <excludeFolder url="file://$MODULE_DIR$/.venv1" />
+      <excludeFolder url="file://$MODULE_DIR$/.idea" />
+      <excludeFolder url="file://$MODULE_DIR$/data/cache" />
     </content>
-    <orderEntry type="jdk" jdkName="Python 3.11 (pythonProject)" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Python 3.11 (pythonProject) (2)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>
