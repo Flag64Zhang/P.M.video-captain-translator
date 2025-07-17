@@ -8,3 +8,7 @@
 /utils/_pycache_/
 /src/_pycache_/
 /_pycache_/
+/src/__pycache__
+/utils/__pycache__
+*.pyc
+*.pyc

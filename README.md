@@ -1,6 +1,9 @@
 <div align="center"><img src="https://perseverantmind.top/img/logo.png" style="width:80px; height:auto;" alt="Project Logo"><h1>P.M.video-captain-translator</h1>An automated tool for local video subtitle translation<br><br></div>
 
 Language: [中文](https://github.com/Flag64Zhang/P.M.video-captain-translator/blob/master/README_zh.md) | [EN](https://github.com/Flag64Zhang/P.M.video-captain-translator/blob/master/README.md)
+
+---
+
 An automated tool for extracting, translating, and re-embedding video subtitles. It supports extracting Chinese subtitles from videos, translating them into English, and re-embedding them to achieve localization. This project is still under development, and no release version is available yet. Thank you for your understanding.
 
 ## Project Overview
@@ -20,61 +23,25 @@ This project aims to automate the process of subtitle extraction, translation, a
 
 ## Installation Steps
 
-1. Clone the repository
-
-bash
-
-
-
-
-
-
-
-
-
-
+1.Clone the repository
 
 ```bash
 git clone https://github.com/Flag64Zhang/P.M.video-captain-translator.git
 cd P.M.video-captain-translator
 ```
 
-1. Install dependencies
-
-bash
-
-
-
-
-
-
-
-
-
-
+2.Install dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-1. Install ffmpeg
+3.Install ffmpeg
 
 - Download ffmpeg for your system and add it to your PATH
 - Verify installation: `ffmpeg -version`
 
 ## Directory Structure
-
-plaintext
-
-
-
-
-
-
-
-
-
-
 
 ```plaintext
 P.M.video-captain-translator/
@@ -109,18 +76,6 @@ P.M.video-captain-translator/
 
 Edit `config/config.yaml` to set input/output paths and parameters:
 
-yaml
-
-
-
-
-
-
-
-
-
-
-
 ```yaml
 paths:
   input_video: "data/input/input_video.mp4"  # Input video path
@@ -141,18 +96,6 @@ translation:
 ```
 
 ### 2. Run the program
-
-bash
-
-
-
-
-
-
-
-
-
-
 
 ```bash
 python main.py

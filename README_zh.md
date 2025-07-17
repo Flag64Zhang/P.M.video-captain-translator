@@ -3,7 +3,6 @@
 <h1>P.M.video-captain-translator</h1>
 一个本地视频翻译字幕的自动化工具<br><br>
 </div>
-语言: [中文](https://github.com/Flag64Zhang/P.M.video-captain-translator/blob/master/README_zh.md) | [EN](https://github.com/Flag64Zhang/P.M.video-captain-translator/blob/master/README.md)
 一个用于视频字幕提取、翻译与重新嵌入的自动化工具，支持从视频中提取中文字幕，翻译为英文后重新嵌入视频，实现视频字幕的本地化处理。本项目仍在开发中，暂无release版提供，望谅解。
 
 ## 项目简介
