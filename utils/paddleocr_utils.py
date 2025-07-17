@@ -156,3 +156,12 @@ class SubtitleAreaProcessor:
         获取默认参数的SubtitleAreaProcessor实例，便于跨模块调用。
         """
         return SubtitleAreaProcessor(frames_dir, sample_step)
+
+class BigModelOcrProcessor:
+    def __init__(self, *args, **kwargs):
+        pass
+    def ocr_frames(self, frames_dir):
+        raise NotImplementedError("大模型 OCR 暂未实现")
+    @staticmethod
+    def merge_duplicate_subtitles(subs):
+        raise NotImplementedError("大模型 OCR 暂未实现")
