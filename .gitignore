@@ -5,3 +5,6 @@
 /data/output/output_subtitles.srt
 /.venv/
 /.idea/
+/utils/_pycache_/
+/src/_pycache_/
+/_pycache_/

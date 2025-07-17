@@ -1,8 +1,6 @@
 import os
-import time
 import pysrt
 from utils.translation_utils import translate
-from utils.paddleocr_utils import SubtitleAreaProcessor
 import yaml
 
 CONFIG_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'config', 'config.yaml')

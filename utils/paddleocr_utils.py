@@ -1,10 +1,11 @@
 # utils/paddleocr_utils.py
 from paddleocr import PaddleOCR
-import os
+import src.srt_generator as srt_generator
 import os
 import cv2
 import numpy as np
 import yaml
+from utils.opencv_utils import detect_subtitle_area_heuristic
 
 CONFIG_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'config', 'config.yaml')
 with open(CONFIG_PATH, 'r', encoding='utf-8') as f:
@@ -57,35 +58,58 @@ class SubtitleOcrProcessor:
 
 #对视频帧图片中的字幕区域进行自动检测、裁剪和模糊处理
 class SubtitleAreaProcessor:
-    def __init__(self, frames_dir, sample_step=1):
+    def __init__(self, frames_dir, sample_step=1, method='auto', crop_ratio=1/6, min_area=500):
         self.frames_dir = frames_dir
         self.sample_step = sample_step
+        self.method = method  # 'auto', 'heuristic', 'ocr'
+        self.crop_ratio = crop_ratio
+        self.min_area = min_area
         self.ocr = PaddleOCR(use_textline_orientation=True, lang='ch')
 
     def detect_subtitle_area(self):
         """
-        用OCR自动检测所有帧的字幕区域，返回最大包围矩形 (x_min, y_min, x_max, y_max)
+        自动检测所有帧的字幕区域，优先用启发式底部高亮区域法，失败时回退OCR法。
+        返回最大包围矩形 (x_min, y_min, x_max, y_max)
         """
-        frames = sorted([f for f in os.listdir(self.frames_dir) if f.endswith('.png')])
+        # 1. 启发式检测（底部高亮区域）
+        print("尝试启发式检测字幕区域...")
+        area = detect_subtitle_area_heuristic(
+            self.frames_dir,
+            sample_step=self.sample_step,
+            crop_ratio=self.crop_ratio,
+            min_area=self.min_area
+        )
+        if area is not None:
+            return area
+        # 2. OCR检测（兼容一维box和四点box）
+        print("启发式检测失败，尝试OCR检测字幕区域...")
         all_boxes = []
+        frames = sorted([f for f in os.listdir(self.frames_dir) if f.endswith('.png')])
         for idx, frame in enumerate(frames):
             if idx % self.sample_step != 0:
-                continue  # 采样加速
+                continue
             img_path = os.path.join(self.frames_dir, frame)
             ocr_result = self.ocr.predict(img_path)
             if ocr_result and isinstance(ocr_result, list):
                 result_dict = ocr_result[0]
                 rec_boxes = result_dict.get('rec_boxes', [])
                 for box in rec_boxes:
-                    xs = [pt[0] for pt in box]
-                    ys = [pt[1] for pt in box]
-                    all_boxes.append([min(xs), min(ys), max(xs), max(ys)])
+                    # 四点坐标框
+                    if isinstance(box, (list, tuple)) and len(box) == 4 and all(isinstance(pt, (list, tuple)) and len(pt) == 2 for pt in box):
+                        xs = [pt[0] for pt in box]
+                        ys = [pt[1] for pt in box]
+                        all_boxes.append([min(xs), min(ys), max(xs), max(ys)])
+                    # 一维4元素框（如[x_min, y_min, x_max, y_max])
+                    elif isinstance(box, (list, tuple, np.ndarray)) and len(box) == 4 and all(isinstance(pt, (int, float, np.integer, np.floating)) for pt in box):
+                        all_boxes.append([box[0], box[1], box[2], box[3]])
+                    else:
+                        print(f"Warning: skip invalid box: {box}")
         if not all_boxes:
             raise ValueError("No subtitle boxes detected!")
         all_boxes = np.array(all_boxes)
         x_min, y_min = np.min(all_boxes[:, 0]), np.min(all_boxes[:, 1])
         x_max, y_max = np.max(all_boxes[:, 2]), np.max(all_boxes[:, 3])
-        print(f"Detected subtitle area: x={x_min}, y={y_min}, w={x_max-x_min}, h={y_max-y_min}")
+        print(f"[OCR] Detected subtitle area: x={x_min}, y={y_min}, w={x_max-x_min}, h={y_max-y_min}")
         return int(x_min), int(y_min), int(x_max), int(y_max)
 
     def crop_subtitle_area(self, output_dir=None, area=None):

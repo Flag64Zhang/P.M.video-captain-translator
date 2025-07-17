@@ -3,9 +3,12 @@
 import yaml
 from utils.ffmpeg_utils import extract_frames
 from utils.opencv_utils import process_frames, ImageSimilarityCleaner
-from src.similar import calc_similarity         # 示例：可用于相似度判断
-from utils.paddleocr_utils import SubtitleOcrProcessor
-from src.subtitle_translator import SubtitleTranslator
+from utils.paddleocr_utils import SubtitleOcrProcessor, SubtitleAreaProcessor
+from src.similar import SubtitleSimilarityHelper
+from utils.translation_utils import translate
+import os
+from utils.ffmpeg_utils import burn_subtitles
+import src.srt_generator as srt_generator
 
 def load_config(config_path):
     with open(config_path, 'r', encoding='utf-8') as f:
@@ -21,6 +24,7 @@ def main():
     output_video = paths.get('output_video', 'data/output/output_video.mp4')
     frames_dir = paths.get('frames_dir', 'data/cache/frames')
     frames_processed_dir = paths.get('frames_processed_dir', 'data/cache/frames_processed')
+    output_srt = paths.get('output_srt', 'data/output/output_subtitles.srt')
 
     # 3. ffmpeg提取视频帧（原始帧）
     print('提取视频帧...')
@@ -35,6 +39,16 @@ def main():
     print('预处理帧图片...')
     process_frames(input_dir=frames_dir, output_dir=frames_processed_dir)
 
+    # 5.5 检测并处理字幕区域
+    print('检测并处理字幕区域...')
+    area_processor = SubtitleAreaProcessor(frames_dir=frames_processed_dir, sample_step=1)
+    area = area_processor.detect_subtitle_area()
+    print(f'检测到的字幕区域: {area}')
+    # 可选：裁剪字幕区域
+    area_processor.crop_subtitle_area(area=area)
+    # 可选：模糊字幕区域
+    area_processor.blur_subtitle_area(area=area, method='gaussian', ksize=31)
+
     # 6. OCR字幕识别与合并（对预处理后的帧）
     print('OCR字幕识别与合并...')
     ocr_processor = SubtitleOcrProcessor(lang='ch')
@@ -42,11 +56,20 @@ def main():
     merged_results = SubtitleOcrProcessor.merge_duplicate_subtitles(ocr_results)
     print('合并后的字幕：', merged_results)
 
-    # 7. 翻译字幕并生成输出视频
-    print('翻译字幕并生成输出视频...')
-    translator = SubtitleTranslator()
-    translator.process(input_video, merged_results, output_video)
+    # # 7. 相似度合并、翻译字典构建和SRT保存
+    # print('相似度合并、翻译字典构建和SRT保存...')
+    # fuzzy_merged = SubtitleSimilarityHelper.merge_duplicate_subtitles_fuzzy(merged_results, threshold=0.8)
+    # translation_dict = SubtitleSimilarityHelper.build_translation_dict(fuzzy_merged, translate)
+    # # SubtitleSimilarityHelper.save_srt(fuzzy_merged, output_srt, translation_dict) # This line is removed
 
+    # 7. 翻译OCR识别后的字幕并保存为SRT
+    print('翻译字幕并保存为SRT...')
+    srt_generator.save_srt(merged_results, output_srt)
+    print(f"SRT字幕已保存到: {output_srt}")
+
+    # 8. 用ffmpeg外挂字幕到视频
+    print('外挂字幕到视频...')
+    burn_subtitles(process_file=input_video, srt_file=output_srt, output_file=output_video)
     print(f"处理完成，输出文件：{output_video}")
 
 if __name__ == "__main__":
