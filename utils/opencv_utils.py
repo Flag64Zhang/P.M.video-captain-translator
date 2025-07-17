@@ -1,10 +1,50 @@
 import os
 import cv2
 import numpy as np
+import yaml
 
+CONFIG_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'config', 'config.yaml')
+with open(CONFIG_PATH, 'r', encoding='utf-8') as f:
+    config = yaml.safe_load(f)
+paths = config.get('paths', {})
+
+#去除重复图片帧
+class ImageSimilarityCleaner:
+    def __init__(self, dir_path=None, threshold=0.8):
+        if dir_path is None:
+            dir_path = paths.get('frames_processed_dir', 'data/cache/frames_processed')
+        self.dir_path = dir_path
+        self.threshold = threshold
+
+    @staticmethod
+    def calc_image_similarity(img1, img2):
+        hist1 = cv2.calcHist([img1], [0], None, [256], [0, 256])
+        hist2 = cv2.calcHist([img2], [0], None, [256], [0, 256])
+        hist1 = cv2.normalize(hist1, hist1).flatten()
+        hist2 = cv2.normalize(hist2, hist2).flatten()
+        similarity = np.dot(hist1, hist2) / (np.linalg.norm(hist1) * np.linalg.norm(hist2))
+        return similarity
+
+    def remove_similar_images(self):
+        files = sorted([f for f in os.listdir(self.dir_path) if f.endswith('.png')])
+        prev_img = None
+        prev_fname = None
+        for fname in files:
+            img_path = os.path.join(self.dir_path, fname)
+            img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
+            if prev_img is not None:
+                sim = self.calc_image_similarity(prev_img, img)
+                if sim >= self.threshold:
+                    os.remove(img_path)
+                    print(f"Removed similar image: {img_path} (similarity={sim:.2f})")
+                    continue
+            prev_img = img
+            prev_fname = fname           
+
+#对图片帧进行预处理
 def process_frames(
-    input_dir="frames",
-    output_dir="frames_processed",
+    input_dir=paths.get('frames_dir', 'data/cache/frames'),
+    output_dir=paths.get('frames_processed_dir', 'data/cache/frames_processed'),
     target_width=640,
     target_height=360,
     crop_ratio=1/3
