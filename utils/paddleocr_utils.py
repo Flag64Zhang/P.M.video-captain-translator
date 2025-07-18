@@ -6,6 +6,12 @@ import cv2
 import numpy as np
 import yaml
 from utils.opencv_utils import detect_subtitle_area_heuristic
+from openai import OpenAI
+import base64
+from langchain_openai import ChatOpenAI
+from langchain_core.messages import HumanMessage
+import json
+import httpx
 
 CONFIG_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'config', 'config.yaml')
 with open(CONFIG_PATH, 'r', encoding='utf-8') as f:
@@ -159,9 +165,57 @@ class SubtitleAreaProcessor:
 
 class BigModelOcrProcessor:
     def __init__(self, *args, **kwargs):
-        pass
+        # 读取API配置
+        openai_cfg = config.get('openai', {})
+        self.model = ChatOpenAI(
+            model_name="deepseek-chat",  # 或 deepseek-vl、deepseek-vl-vision 等
+            openai_api_key=openai_cfg.get('api_key'),
+            openai_api_base=openai_cfg.get('base_url')
+        )
+
     def ocr_frames(self, frames_dir):
-        raise NotImplementedError("大模型 OCR 暂未实现")
+        """
+        对frames_dir下所有png帧图片，调用DeepSeek多模态API做OCR，返回[(start, end, text), ...]格式
+        """
+        import time
+        results = []
+        frames = sorted([f for f in os.listdir(frames_dir) if f.endswith('.png')])
+        for idx, frame in enumerate(frames):
+            img_path = os.path.join(frames_dir, frame)
+            with open(img_path, "rb") as f:
+                img_bytes = f.read()
+            base64_img = base64.b64encode(img_bytes).decode("utf-8")
+            # 构造多模态消息
+            content = json.dumps([
+                {"type": "text", "text": "请识别这张视频字幕帧图片中的所有字幕内容，只输出字幕本身，不要输出任何解释、格式、标点或多余内容。"},
+                {"type": "image", "image": {"data": base64_img, "format": "base64"}}
+            ])
+            message = HumanMessage(content=content)
+            try:
+                response = self.model.invoke([message])
+                text = response.content.strip()
+            except Exception as e:
+                print(f"[BigModelOCR] Error on {frame}: {e}")
+                text = ""
+            if text:
+                start_time = idx
+                end_time = idx + 1
+                results.append((start_time, end_time, text))
+            print(f"[BigModelOCR] {frame}: {text}")
+            time.sleep(1.2)
+        return results
+
     @staticmethod
     def merge_duplicate_subtitles(subs):
-        raise NotImplementedError("大模型 OCR 暂未实现")
+        if not subs:
+            return []
+        merged = []
+        last_start, last_end, last_text = subs[0]
+        for start, end, text in subs[1:]:
+            if text == last_text:
+                last_end = end
+            else:
+                merged.append((last_start, last_end, last_text))
+                last_start, last_end, last_text = start, end, text
+        merged.append((last_start, last_end, last_text))
+        return merged

@@ -10,10 +10,22 @@ import os
 from utils.ffmpeg_utils import burn_subtitles
 import src.srt_generator as srt_generator
 import sys
+import glob
 
 def load_config(config_path):
     with open(config_path, 'r', encoding='utf-8') as f:
         return yaml.safe_load(f)
+
+def clean_dir(dir_path):
+    for f in glob.glob(os.path.join(dir_path, '*')):
+        try:
+            if os.path.isfile(f):
+                os.remove(f)
+            elif os.path.isdir(f):
+                import shutil
+                shutil.rmtree(f)
+        except Exception as e:
+            print(f"清理文件失败: {f}，原因: {e}")
 
 def run_pipeline(input_video, output_video, ocr_method, log_callback=print):
     """
@@ -21,6 +33,10 @@ def run_pipeline(input_video, output_video, ocr_method, log_callback=print):
     ocr_method: 'paddleocr' 或 'bigmodel'
     log_callback: 日志输出函数，默认为 print
     """
+     # 自动清理输出目录
+    clean_dir('data/output')
+    log_callback('输出目录已清理。')
+
     # 自动补全输出文件名后缀
     if not output_video.lower().endswith('.mp4'):
         output_video += '.mp4'
@@ -62,10 +78,10 @@ def run_pipeline(input_video, output_video, ocr_method, log_callback=print):
             from utils.paddleocr_utils import BigModelOcrProcessor
             ocr_processor = BigModelOcrProcessor()
             ocr_results = ocr_processor.ocr_frames(frames_processed_dir)
-            merged_results = BigModelOcrProcessor.merge_duplicate_subtitles(ocr_results)
+            merged_results = ocr_processor.merge_duplicate_subtitles(ocr_results)
         except ImportError:
-            log_callback('大模型 OCR 未实现！')
-            raise NotImplementedError('大模型 OCR 未实现')
+            log_callback('大模型 OCR 错误！')
+            raise NotImplementedError('大模型 OCR 错误')
     else:
         log_callback(f'OCR方式 {ocr_method} 不支持')
         raise ValueError(f'不支持的OCR方式: {ocr_method}')
@@ -78,8 +94,15 @@ def run_pipeline(input_video, output_video, ocr_method, log_callback=print):
 
     # 8. 用ffmpeg外挂字幕到视频
     log_callback('外挂字幕到视频...')
-    burn_subtitles(process_file=input_video, srt_file=output_srt, output_file=output_video)
+    temp_output = output_video.replace('.mp4', '_temp.mp4')
+    burn_subtitles(process_file=output_video, srt_file=output_srt, output_file=temp_output)
+    os.replace(temp_output, output_video)
     log_callback(f"处理完成，输出文件：{output_video}")
+
+    # 9. 自动清理缓存目录
+    clean_dir('data/cache/frames')
+    clean_dir('data/cache/frames_processed')
+    log_callback('缓存目录已清理。')
 
 def main():
     # 1. 加载配置

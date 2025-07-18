@@ -34,37 +34,23 @@ def get_video_resolution(video_file):
 
 def remove_subtitles_area(video_file, output_file, area=None):
     width, height = get_video_resolution(video_file)
-    print(f"video size: {width}x{height}, area: {area}")
-    if area is not None:
-        x_min, y_min, x_max, y_max = area
-        crop_w = x_max - x_min
-        crop_h = y_max - y_min
-        crop_x = x_min
-        crop_y = y_min
-        filter_complex = (
-            f"[0:v]split=2[bg][fg];"
-            f"[fg]crop={crop_w}:{crop_h}:{crop_x}:{crop_y},boxblur=10:1[blur];"
-            f"[bg][blur]overlay={crop_x}:{crop_y}"
-        )
-        print("ffmpeg filter_complex:", filter_complex)
-    else:
-        sub_h = height // 6
-        sub_y = height - sub_h
-        filter_complex = (
-            f"[0:v]split=2[bg][fg];"
-            f"[fg]crop={width}:{sub_h}:0:{sub_y},boxblur=10:1[blur];"
-            f"[bg][blur]overlay=0:{sub_y}"
-        )
+    sub_h = height // 6
+    sub_y = height - sub_h
+    filter_complex = (
+        f"[0:v]split=2[bg][fg];"
+        f"[fg]crop={width}:{sub_h}:0:{sub_y},boxblur=10:1[blur];"
+        f"[bg][blur]overlay=0:{sub_y}"
+    )
     (
-    ffmpeg
-    .input(video_file)
-    .output(
-        output_file,
-        vf=filter_complex,
-        vcodec='libx264',
-        acodec='copy'
+        ffmpeg
+        .input(video_file)
+        .output(
+            output_file,
+            vf=filter_complex,
+            vcodec='libx264',
+            acodec='copy'
         )
-    .run(overwrite_output=True)
+        .run(overwrite_output=True)
     )
     print(f"Video with subtitle area blurred saved to: {output_file}")
 

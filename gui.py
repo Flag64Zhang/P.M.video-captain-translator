@@ -30,22 +30,36 @@ class App(tk.Tk):
         tk.Radiobutton(self, text="PaddleOCR", variable=self.ocr_var, value="paddleocr").place(x=100, y=110)
         tk.Radiobutton(self, text="大模型OCR", variable=self.ocr_var, value="bigmodel").place(x=200, y=110)
 
+        # 大模型平台选择与API输入
+        tk.Label(self, text="大模型平台:").place(x=30, y=150)
+        self.platform_var = tk.StringVar(value="deepseek")
+        self.platform_menu = tk.OptionMenu(self, self.platform_var, '豆包', 'deepseek', 'kimi', 'chat GPT')
+        self.platform_menu.place(x=120, y=145, width=100)
+        tk.Label(self, text="请输入api:").place(x=240, y=150)
+        self.api_entry = tk.Entry(self, width=30)
+        self.api_entry.place(x=320, y=150)
+        tk.Button(self, text="保存", command=self.save_api_config).place(x=500, y=145, width=60)
+
         # 运行按钮
         self.run_btn = tk.Button(self, text="开始处理", command=self.run)
-        self.run_btn.place(x=260, y=150, width=100, height=35)
+        self.run_btn.place(x=260, y=190, width=100, height=35)
+
+        # 清除缓存按钮
+        self.clear_btn = tk.Button(self, text="清除缓存", command=self.clear_cache)
+        self.clear_btn.place(x=380, y=190, width=100, height=35)
 
         # 日志输出
         self.log_text = scrolledtext.ScrolledText(self, width=70, height=12, state='disabled', font=("Consolas", 10))
-        self.log_text.place(x=30, y=200)
+        self.log_text.place(x=30, y=240)
 
     def select_input(self):
-        path = filedialog.askopenfilename(filetypes=[("MP4文件", "*.mp4"), ("所有文件", "*.*")])
+        path = filedialog.askopenfilename(filetypes=[("请选择要翻译的MP4文件", "*.mp4"), ("所有文件", "*.*")])
         if path:
             self.input_entry.delete(0, tk.END)
             self.input_entry.insert(0, path)
 
     def select_output(self):
-        path = filedialog.asksaveasfilename(defaultextension=".mp4", filetypes=[("MP4文件", "*.mp4"), ("所有文件", "*.*")])
+        path = filedialog.asksaveasfilename(defaultextension=".mp4", filetypes=[("请选择输出目录", "*.mp4"), ("所有文件", "*.*")])
         if path:
             self.output_entry.delete(0, tk.END)
             self.output_entry.insert(0, path)
@@ -56,6 +70,32 @@ class App(tk.Tk):
         self.log_text.see(tk.END)
         self.log_text.config(state='disabled')
         self.update()
+
+    def save_api_config(self):
+        import yaml
+        platform = self.platform_var.get()
+        api_key = self.api_entry.get().strip()
+        # 平台对应base_url
+        base_url_map = {
+            '豆包': 'https://open.bigmodel.cn/api/paas/v4',
+            'deepseek': 'https://api.deepseek.com/v1',
+            'kimi': 'https://api.moonshot.cn/v1',
+            'chat GPT': 'https://api.openai.com/v1',
+        }
+        base_url = base_url_map.get(platform, '')
+        config_path = 'config/config.yaml'
+        try:
+            with open(config_path, 'r', encoding='utf-8') as f:
+                config = yaml.safe_load(f)
+            if 'openai' not in config:
+                config['openai'] = {}
+            config['openai']['api_key'] = api_key
+            config['openai']['base_url'] = base_url
+            with open(config_path, 'w', encoding='utf-8') as f:
+                yaml.safe_dump(config, f, allow_unicode=True)
+            self.log(f"已保存API配置: 平台={platform}, base_url={base_url}")
+        except Exception as e:
+            self.log(f"保存API配置失败: {e}")
 
     def run(self):
         input_video = self.input_entry.get().strip()
@@ -85,6 +125,16 @@ class App(tk.Tk):
             messagebox.showerror("异常", str(e))
         finally:
             self.run_btn.config(state='normal')
+
+    def clear_cache(self):
+        try:
+            from main import clean_dir
+            clean_dir('data/output')
+            clean_dir('data/cache/frames')
+            clean_dir('data/cache/frames_processed')
+            self.log('缓存已清理。')
+        except Exception as e:
+            self.log(f'清理缓存失败: {e}')
 
 if __name__ == "__main__":
     app = App()
