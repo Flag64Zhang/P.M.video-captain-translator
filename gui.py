@@ -2,6 +2,33 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, scrolledtext
 import threading
 from main import run_pipeline
+from PIL import Image, ImageTk
+import time
+#LOGO
+def show_splash():
+    splash = tk.Tk()
+    splash.overrideredirect(True)
+    splash.geometry('400x300+500+200')
+    try:
+        img = Image.open('logo.png')
+        try:
+            resample = Image.Resampling.LANCZOS
+        except AttributeError:
+            resample = Image.ANTIALIAS
+        img = img.resize((400, 300), resample)
+        logo = ImageTk.PhotoImage(img)
+        label = tk.Label(splash, image=logo)
+        label.image = logo
+        label.pack()
+    except Exception as e:
+        print(f"加载logo.png失败: {e}")
+        label = tk.Label(splash, text='LOGO', font=('Arial', 40))
+        label.pack(expand=True)
+    splash.update()
+    splash.after(3000, splash.destroy)
+    splash.mainloop()
+
+show_splash()
 
 class App(tk.Tk):
     def __init__(self):

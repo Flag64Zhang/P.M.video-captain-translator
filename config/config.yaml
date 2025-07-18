@@ -1,5 +1,5 @@
 openai:
-  api_key: "zhangxuhao2005@shu.edu.cn"
+  api_key: "sk-9dadfda7b5fc4b339729ab53d37e47df"
   base_url: "https://api.deepseek.com/v1"
   model: "deepseek-chat"
 paths:
