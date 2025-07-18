@@ -6,7 +6,7 @@ from main import run_pipeline
 class App(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("视频字幕处理工具")
+        self.title("视频字幕翻译工具")
         self.geometry("600x400")
         self.resizable(False, False)
         self.create_widgets()
@@ -36,13 +36,27 @@ class App(tk.Tk):
         self.platform_menu = tk.OptionMenu(self, self.platform_var, '豆包', 'deepseek', 'kimi', 'chat GPT')
         self.platform_menu.place(x=120, y=145, width=100)
         tk.Label(self, text="请输入api:").place(x=240, y=150)
+        # 读取config.yaml中的默认api
+        import yaml
+        try:
+            with open('config/config.yaml', 'r', encoding='utf-8') as f:
+                config = yaml.safe_load(f)
+            default_api = config.get('openai', {}).get('api_key', '')
+        except Exception:
+            default_api = ''
         self.api_entry = tk.Entry(self, width=30)
         self.api_entry.place(x=320, y=150)
+        self.api_entry.insert(0, default_api)
         tk.Button(self, text="保存", command=self.save_api_config).place(x=500, y=145, width=60)
 
         # 运行按钮
         self.run_btn = tk.Button(self, text="开始处理", command=self.run)
         self.run_btn.place(x=260, y=190, width=100, height=35)
+
+        # 停止处理按钮
+        self.stop_flag = False
+        self.stop_btn = tk.Button(self, text="停止处理", command=self.stop_processing)
+        self.stop_btn.place(x=140, y=190, width=100, height=35)
 
         # 清除缓存按钮
         self.clear_btn = tk.Button(self, text="清除缓存", command=self.clear_cache)
@@ -75,14 +89,21 @@ class App(tk.Tk):
         import yaml
         platform = self.platform_var.get()
         api_key = self.api_entry.get().strip()
-        # 平台对应base_url
+        # 平台对应base_url和model
         base_url_map = {
-            '豆包': 'https://open.bigmodel.cn/api/paas/v4',
+            '豆包': 'https://ark.cn-beijing.volces.com/api/v3',
             'deepseek': 'https://api.deepseek.com/v1',
             'kimi': 'https://api.moonshot.cn/v1',
             'chat GPT': 'https://api.openai.com/v1',
         }
+        model_map = {
+            '豆包': 'glm-4',
+            'deepseek': 'deepseek-chat',
+            'kimi': 'moonshot-v1-8k',
+            'chat GPT': 'gpt-3.5-turbo',
+        }
         base_url = base_url_map.get(platform, '')
+        model = model_map.get(platform, '')
         config_path = 'config/config.yaml'
         try:
             with open(config_path, 'r', encoding='utf-8') as f:
@@ -91,13 +112,15 @@ class App(tk.Tk):
                 config['openai'] = {}
             config['openai']['api_key'] = api_key
             config['openai']['base_url'] = base_url
+            config['openai']['model'] = model
             with open(config_path, 'w', encoding='utf-8') as f:
                 yaml.safe_dump(config, f, allow_unicode=True)
-            self.log(f"已保存API配置: 平台={platform}, base_url={base_url}")
+            self.log(f"已保存API配置: 平台={platform}, base_url={base_url}, model={model}")
         except Exception as e:
             self.log(f"保存API配置失败: {e}")
 
     def run(self):
+        self.stop_flag = False
         input_video = self.input_entry.get().strip()
         output_video = self.output_entry.get().strip()
         ocr_method = self.ocr_var.get()
@@ -108,14 +131,24 @@ class App(tk.Tk):
         self.log_text.config(state='normal')
         self.log_text.delete(1.0, tk.END)
         self.log_text.config(state='disabled')
-        threading.Thread(target=self._run_pipeline, args=(input_video, output_video, ocr_method), daemon=True).start()
+        self.worker_thread = threading.Thread(target=self._run_pipeline, args=(input_video, output_video, ocr_method), daemon=True)
+        self.worker_thread.start()
+
+    def stop_processing(self):
+        self.stop_flag = True
+        self.log("已请求停止处理，稍等当前步骤结束...")
 
     def _run_pipeline(self, input_video, output_video, ocr_method):
-        # 自动补全输出文件名后缀
         if not output_video.lower().endswith('.mp4'):
             output_video += '.mp4'
         try:
-            run_pipeline(input_video, output_video, ocr_method, log_callback=self.log)
+            import time
+            for i in range(1):  # 这里保留原有结构，实际处理流程在run_pipeline
+                if self.stop_flag:
+                    self.log("处理已被用户中断。")
+                    self.run_btn.config(state='normal')
+                    return
+                run_pipeline(input_video, output_video, ocr_method, log_callback=self.log, stop_flag_getter=lambda: self.stop_flag)
             self.log("\n处理完成！")
         except NotImplementedError as e:
             self.log(f"错误: {e}")

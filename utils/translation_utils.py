@@ -21,7 +21,7 @@ def translate(text):
         f"Only output the English translation itself, with no explanation, notes, or extra content:\n{text}"
     )
     response = client.chat.completions.create(
-        model="deepseek-chat",
+        model=openai_cfg.get('model'),
         messages=[
             {"role": "system", "content": "You are a professional translator."},
             {"role": "user", "content": prompt}

@@ -1,15 +1,13 @@
-# 大模型API配置
 openai:
   api_key: "zhangxuhao2005@shu.edu.cn"
   base_url: "https://api.deepseek.com/v1"
-
-# 路径配置
+  model: "deepseek-chat"
 paths:
-  input_video: data/input/input_video.mp4
-  output_video: data/output/output_video.mp4
-  process_video: data/output/process_video.mp4
+  frames_blurred_dir: data/cache/frames_blurred
+  frames_cropped_dir: data/cache/frames_cropped
   frames_dir: data/cache/frames
   frames_processed_dir: data/cache/frames_processed
-  frames_cropped_dir: data/cache/frames_cropped
-  frames_blurred_dir: data/cache/frames_blurred
+  input_video: data/input/input_video.mp4
   output_srt: data/output/output_subtitles.srt
+  output_video: data/output/output_video.mp4
+  process_video: data/output/process_video.mp4
