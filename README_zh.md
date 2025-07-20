@@ -1,8 +1,9 @@
 <div align="center">
-<img src="https://perseverantmind.top/img/logo.png" style="width:80px; height:auto;" alt="image">
+<img src="https://perseverantmind.top/images/logo.png" style="width:80px; height:auto;" alt="image">
 <h1>P.M.video-captain-translator</h1>
 一个本地视频翻译字幕的自动化工具<br><br>
 </div>
+
 一个用于视频字幕提取、翻译与重新嵌入的自动化工具，支持从视频中提取中文字幕，翻译为英文后重新嵌入视频，实现视频字幕的本地化处理。本项目仍在开发中，暂无release版提供，望谅解。
 
 ## 项目简介
