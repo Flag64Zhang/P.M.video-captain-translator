@@ -1,4 +1,4 @@
-<div align="center"><img src="https://perseverantmind.top/img/logo.png" style="width:80px; height:auto;" alt="Project Logo"><h1>P.M.video-captain-translator</h1>An automated tool for local video subtitle translation<br><br></div>
+<div align="center"><img src="https://perseverantmind.top/images/logo.png" style="width:80px; height:auto;" alt="Project Logo"><h1>P.M.video-captain-translator</h1>An automated tool for local video subtitle translation<br><br></div>
 
 Language: [中文](https://github.com/Flag64Zhang/P.M.video-captain-translator/blob/master/README_zh.md) | [EN](https://github.com/Flag64Zhang/P.M.video-captain-translator/blob/master/README.md)
 
