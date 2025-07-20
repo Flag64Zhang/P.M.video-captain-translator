@@ -1,5 +1,5 @@
 <div align="center">
-<img src="https://perseverantmind.top/img/logo.png" style="width:80px; height:auto;" alt="image">
+<img src="https://perseverantmind.top/images/logo.png" style="width:80px; height:auto;" alt="image">
 <h1>P.M.video-captain-translator</h1>
 一个本地视频翻译字幕的自动化工具<br><br>
 </div>
